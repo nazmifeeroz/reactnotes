@@ -11,6 +11,7 @@ class App extends Component {
 	constructor(props) {
 		super(props);
 		this.addNote = this.addNote.bind(this);
+		this.removeNote = this.removeNote.bind(this);
 		this.app = firebase.initializeApp(DB_CONFIG);
 		this.database = this.app.database().ref().child('notes');
 		this.state = {
@@ -29,25 +30,32 @@ class App extends Component {
 				notes: previousNotes
 			})
 		})
+		
+		this.database.on('child_removed', snap => {
+			for(var i=0; i < previousNotes.length; i++){
+				if(previousNotes[i].id === snap.key){
+					previousNotes.splice(i,1);
+				}
+			}
+			this.setState({
+				notes: previousNotes
+			})
+		})
 	}
 	
 	addNote(note){
 		this.database.push().set({noteContent: note});
 	}
-//	
-//	addNote(note) {
-//		const previousNotes = this.state.notes;
-//		previousNotes.push({ id: previousNotes.length + 1, noteContent: note });
-//		this.setState({
-//			notes: previousNotes
-//		})
-//	}
 	
-  render() {
+	removeNote(noteId){
+		this.database.child(noteId).remove();
+	}
+	
+  render(props) {
     return (
 			<div className="notesWrapper">
 				<div className="notesHeader">
-					<div className="heading">React &amp; Firebase To-Do List</div>
+					<div className="heading">Nazmi's To-Do List</div>
 				</div>
 				<div className="notesBody">
 				{
@@ -55,7 +63,8 @@ class App extends Component {
 						return (
 							<Note noteContent={note.noteContent} 
 							noteId={note.id} 
-							key={note.id}/>
+							key={note.id} 
+							removeNote= {this.removeNote} />
 						)
 					})		
 				}
